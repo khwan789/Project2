@@ -28,6 +28,9 @@ app.main = {
     lastTime: 0, // used by calculateDeltaTime() 
     debug: true,
 
+    dirX: 0,
+    dirY: 0,
+    
     // methods
 	init : function(){
 		console.log("app.main.init() called");
@@ -37,7 +40,11 @@ app.main = {
 		this.canvas.height = Game.HEIGHT;
 		this.ctx = this.canvas.getContext('2d');        
         
-        this.canvas.onmousemove = this.doMousemove.bind(this);
+        this.dirX = 50;
+        this.dirY = 0;
+        
+        this.canvas.onmousemove= this.doMousemove.bind(this);
+        
         
 		// start the game loop
 		this.update();
@@ -76,7 +83,6 @@ app.main = {
 	
 		// ii) draw tower and arrow
         this.buildTower(this.ctx);
-        this.fireDirection(this.canvas, this.ctx);
         
 		// iii) draw HUD
 
@@ -87,8 +93,16 @@ app.main = {
 
 	},
 	
-    buildTower: function(ctx){
-        //console.log("tower");
+    buildTower: function(ctx){        
+        // gun
+        ctx.strokeStyle = "skyblue";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(Game.WIDTH/2, Game.HEIGHT/2);
+        ctx.lineTo(Game.WIDTH/2 + this.dirX, Game.HEIGHT/2 + this.dirY);
+        ctx.stroke();
+        
+        // bunker
         ctx.save();
         ctx.fillStyle = "skyblue";
         ctx.beginPath();
@@ -98,9 +112,17 @@ app.main = {
         ctx.restore();
     },
     
-
     fire: function(ctx, mouse){
         
+    },
+    
+    doMousemove: function(e){        
+        var rect = this.canvas.getBoundingClientRect();
+        
+        //console.log("clicked");
+        
+        this.dirX = e.clientX - rect.left//this.canvas.offsetLeft;
+        this.dirY = e.clientY - rect.top//this.canvas.offsetTop;
     },
     
 	fillText: function(ctx, string, x, y, css, color) {
