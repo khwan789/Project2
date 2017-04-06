@@ -98,23 +98,7 @@ app.main = {
         ctx.restore();
     },
     
-    canvasMouse: function(canvas, e){
-        //http://stackoverflow.com/questions/17130395/real-mouse-position-in-canvas
-        var rect = canvas.getBoundingClientRect();
-        var mouse = {};
-        
-        mouse.x = e.clientX - rect.left;
-        mouse.y = e.clientY - rect.top;
-        
-        return mouse;
-    },
-    
-    doMousemove: function(e){
-        var mouse = canvasMouse(this.canvas, e);
-        
-        this.fireDirection(this.ctx, mouse)
-    },
-    
+
     fire: function(ctx, mouse){
         
     },
