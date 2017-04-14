@@ -28,8 +28,19 @@ app.main = {
     lastTime: 0, // used by calculateDeltaTime() 
     debug: true,
 
-    dirX: 0,
-    dirY: 0,
+    //mouse position
+    dirX:0,
+    dirY:0,
+    //bullet start position
+    startX: Game.WIDTH/2,
+    startY: Game.HEIGHT/2,
+    //bullet fire direction
+    mouseX: 0,
+    mouseY: 0,
+    
+    fire: false,
+    
+    animationID: 0,
     
     // methods
 	init : function(){
@@ -40,12 +51,20 @@ app.main = {
 		this.canvas.height = Game.HEIGHT;
 		this.ctx = this.canvas.getContext('2d');        
         
-        this.dirX = 50;
+        this.dirX = 0;
         this.dirY = 0;
         
+        this.startX = Game.WIDTH/2;
+        this.startY = Game.HEIGHT/2;
+    
+        this.mouseX = 0;
+        this.mouseY = 0;
+    
+        this.fire = false;
+        
         this.canvas.onmousemove= this.doMousemove.bind(this);
-        
-        
+        this.canvas.onmousedown = this.doMousedown.bind(this);
+            
 		// start the game loop
 		this.update();
 	},
@@ -81,9 +100,24 @@ app.main = {
 		this.ctx.fillStyle = "grey"; 
 		this.ctx.fillRect(0,0, Game.WIDTH,Game.HEIGHT); 
 	
-		// ii) draw tower and arrow
-        this.buildTower(this.ctx);
+		// ii) draw bunker and bullet
+        //fire method
+        if(this.fire){
+            this.bullet(this.startX, this.startY);
+        }
+        if(this.fire && this.startX > 0 && this.startX <= Game.WIDTH && this.startY > 0 && this.startY <= Game.HEIGHT){
+            this.startX += this.mouseX; //* dt;
+            this.startY += this.mouseY; //* dt;
+        }
+        else{
+            this.fire = false;
+            this.startX = Game.WIDTH/2;
+            this.startY = Game.HEIGHT/2;
+        }
         
+        //draw bunker
+        this.buildTower(this.ctx);
+
 		// iii) draw HUD
 
 		// iv) draw debug info
@@ -95,12 +129,14 @@ app.main = {
 	
     buildTower: function(ctx){        
         // gun
-        ctx.strokeStyle = "skyblue";
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(Game.WIDTH/2, Game.HEIGHT/2);
-        ctx.lineTo(Game.WIDTH/2 + this.dirX, Game.HEIGHT/2 + this.dirY);
-        ctx.stroke();
+        //ctx.save();
+        //ctx.strokeStyle = "skyblue";
+        //ctx.lineWidth = 5;
+        //ctx.beginPath();
+        //ctx.moveTo(Game.WIDTH/2, Game.HEIGHT/2);
+        //ctx.lineTo(Game.WIDTH/2 + this.dirX, Game.HEIGHT/2 + this.dirY);
+        //ctx.stroke();
+        //ctx.restore();
         
         // bunker
         ctx.save();
@@ -110,19 +146,70 @@ app.main = {
         ctx.closePath();
         ctx.fill();
         ctx.restore();
-    },
-    
-    fire: function(ctx, mouse){
+        
+        //target
+        ctx.save();
+        ctx.strokeStyle = "red";
+        ctx.beginPath();
+        ctx.arc(this.dirX, this.dirY, 10,0,Math.PI * 2, false);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(this.dirX + 10, this.dirY);
+        ctx.lineTo(this.dirX - 10, this.dirY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(this.dirX, this.dirY + 10);
+        ctx.lineTo(this.dirX, this.dirY - 10);
+        ctx.stroke();
+        ctx.restore();
+        
         
     },
     
-    doMousemove: function(e){        
-        var rect = this.canvas.getBoundingClientRect();
+    bullet: function(x, y){
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 5, 0, Math.PI *2, false);
+        this.ctx.closePath();
+        this.ctx.fillStyle = "black";
+        this.ctx.fill();
+        this.ctx.restore();
+    },
+    
+    doMousemove: function(e){
+        var mouse = getMouse(e);
         
         //console.log("clicked");
         
-        this.dirX = e.clientX - rect.left//this.canvas.offsetLeft;
-        this.dirY = e.clientY - rect.top//this.canvas.offsetTop;
+        this.dirX = mouse.x;
+        this.dirY = mouse.y;
+    },
+    
+    doMousedown: function(e){
+            this.fire = true;
+            
+            var mouse = getMouse(e);
+            
+            var distance = {
+                x: (Game.WIDTH/2) - mouse.x,
+                y: (Game.HEIGHT/2) - mouse.y, 
+                length: function(){
+                    return Math.sqrt(this.x * this.x + this.y * this.y);
+                }
+            }
+        
+            var a = Math.acos(2/distance.length());
+            var b = Math.atan2(distance.y, distance.x);
+            var t = b-a;
+            
+            var Tan = {
+                x: 5 * Math.sin(t),
+                y: 5 * -Math.cos(t)
+            }
+            
+            this.mouseX = Tan.x;
+            this.mouseY = Tan.y;
     },
     
 	fillText: function(ctx, string, x, y, css, color) {
