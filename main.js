@@ -37,10 +37,17 @@ app.main = {
     //bullet fire direction
     mouseX: 0,
     mouseY: 0,
-    
-    fire: false,
+
+    fire: false,    
     
     animationID: 0,
+    
+    //images
+    bunker: undefined,
+    bg: undefined,
+    
+    //sound
+    sound: undefined,
     
     // methods
 	init : function(){
@@ -65,6 +72,12 @@ app.main = {
         this.canvas.onmousemove= this.doMousemove.bind(this);
         this.canvas.onmousedown = this.doMousedown.bind(this);
             
+        //images
+        this.bunker = new Image;
+        this.bunker.src = 'image/bunker.png';
+        this.bg = new Image;
+        this.bg.src = 'image/background.jpg';
+        
 		// start the game loop
 		this.update();
 	},
@@ -97,14 +110,15 @@ app.main = {
         
 		// 5) DRAW	
 		// i) draw background
-		this.ctx.fillStyle = "grey"; 
-		this.ctx.fillRect(0,0, Game.WIDTH,Game.HEIGHT); 
-	
+        this.ctx.drawImage(this.bg,0,0,Game.WIDTH,Game.HEIGHT/2);
+        this.ctx.drawImage(this.bg,0,Game.HEIGHT/2,Game.WIDTH,Game.HEIGHT/2);
+
 		// ii) draw bunker and bullet
         //fire method
         if(this.fire){
             this.bullet(this.startX, this.startY);
         }
+
         if(this.fire && this.startX > 0 && this.startX <= Game.WIDTH && this.startY > 0 && this.startY <= Game.HEIGHT){
             this.startX += this.mouseX; //* dt;
             this.startY += this.mouseY; //* dt;
@@ -118,12 +132,8 @@ app.main = {
         //draw bunker
         this.buildTower(this.ctx);
 
-		// iii) draw HUD
-
-		// iv) draw debug info
-
-        // 6) CHEATS
-        //if on start screen or round over screen
+        //play sound
+        this.sound.playBGAudio();
 
 	},
 	
@@ -137,15 +147,17 @@ app.main = {
         //ctx.lineTo(Game.WIDTH/2 + this.dirX, Game.HEIGHT/2 + this.dirY);
         //ctx.stroke();
         //ctx.restore();
+        ctx.drawImage(this.bunker,Game.WIDTH/2-25, Game.HEIGHT/2-25, 50,50);
         
         // bunker
-        ctx.save();
-        ctx.fillStyle = "skyblue";
-        ctx.beginPath();
-        ctx.arc(Game.WIDTH/2, Game.HEIGHT/2, 20, 0, Math.PI * 2, false);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+        //ctx.save();
+        //ctx.fillStyle = "skyblue";
+        //ctx.beginPath();
+        //ctx.arc(Game.WIDTH/2, Game.HEIGHT/2, 20, 0, Math.PI * 2, false);
+        //ctx.closePath();
+        //ctx.fill();
+        //ctx.restore();
+        
         
         //target
         ctx.save();
@@ -187,29 +199,31 @@ app.main = {
     },
     
     doMousedown: function(e){
-            this.fire = true;
-            
-            var mouse = getMouse(e);
-            
-            var distance = {
-                x: (Game.WIDTH/2) - mouse.x,
-                y: (Game.HEIGHT/2) - mouse.y, 
-                length: function(){
-                    return Math.sqrt(this.x * this.x + this.y * this.y);
-                }
-            }
+//http://stackoverflow.com/questions/23117776/find-tangent-between-point-and-circle-canvas
+        this.fire = true;
+        this.sound.fireEffect();
         
-            var a = Math.acos(2/distance.length());
-            var b = Math.atan2(distance.y, distance.x);
-            var t = b-a;
-            
-            var Tan = {
-                x: 5 * Math.sin(t),
-                y: 5 * -Math.cos(t)
+        var mouse = getMouse(e);
+        
+        var distance = {
+            x: (Game.WIDTH/2) - mouse.x,
+            y: (Game.HEIGHT/2) - mouse.y, 
+            length: function(){
+                return Math.sqrt(this.x * this.x + this.y * this.y);
             }
-            
-            this.mouseX = Tan.x;
-            this.mouseY = Tan.y;
+        }
+    
+        var a = Math.acos(2/distance.length());
+        var b = Math.atan2(distance.y, distance.x);
+        var t = b-a;
+        
+        var Tan = {
+            x: 5 * Math.sin(t),
+            y: 5 * -Math.cos(t)
+        }
+        
+        this.mouseX = Tan.x;
+        this.mouseY = Tan.y;
     },
     
 	fillText: function(ctx, string, x, y, css, color) {
@@ -246,7 +260,7 @@ app.main = {
         //stop animation loop
         cancelAnimationFrame(this.animationID);
         
-        //this.stopBGAudio();
+        this.sound.stopBGAudio();
         
         //call update() once so pause screen gets drawn
         this.update();
@@ -258,7 +272,7 @@ app.main = {
         
         this.paused = false;
         
-        //this.sound.playBGAudio();
+        this.sound.playBGAudio();
         
         //restart loop
         this.update();

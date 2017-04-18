@@ -10,7 +10,13 @@
             left: 5px;
             z-index: 0;
         }
+        * {cursor: none;}
+        #audioControls{display:none;}
 	</style>
+    <!--image source
+    bunker:http://gmt-max.org/uploads/posts/2016-02/1456519415_life_in_bunker_logo.png
+    field:https://t3.ftcdn.net/jpg/01/02/12/44/240_F_102124428_yXDAM9HcY5zJC76FDkWAmx3ZGVKXyWtm.jpg
+    zombie:https://s-media-cache-ak0.pinimg.com/236x/55/7a/1e/557a1e13af535e8351cb7056fde8589f.jpg-->
 	<title>Game</title>
 </head>
 <body>
@@ -21,5 +27,11 @@
 	<script src='main.js'></script>
     <script src='loader.js'></script>
     <script src='utilities.js'></script>
+    <script src='sound.js'></script>
+    
+     <section id="audioControls">
+	   <audio id="bgAudio" src="media/background.mp3" controls loop></audio>
+	   <audio id="fireAudio" src="media/fire.mp3" controls></audio>
+    </section>
 </body>
 </html>
