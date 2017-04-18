@@ -27,7 +27,8 @@ app.main = {
     ctx: undefined,
     lastTime: 0, // used by calculateDeltaTime() 
     debug: true,
-
+    begins: true,
+    
     //mouse position
     dirX:0,
     dirY:0,
@@ -37,9 +38,8 @@ app.main = {
     //bullet fire direction
     mouseX: 0,
     mouseY: 0,
-
-    fire: false,    
     
+    fire: false,    
     animationID: 0,
     
     //images
@@ -57,6 +57,8 @@ app.main = {
 		this.canvas.width = Game.WIDTH;
 		this.canvas.height = Game.HEIGHT;
 		this.ctx = this.canvas.getContext('2d');        
+        
+        this.begins = true;
         
         this.dirX = 0;
         this.dirY = 0;
@@ -82,11 +84,6 @@ app.main = {
 		this.update();
 	},
 	
-    //next stage
-    reset: function(){
-
-    },
-    
 	update: function(){
 		// 1) LOOP
 		// schedule a call to update()
@@ -134,6 +131,10 @@ app.main = {
 
         //play sound
         this.sound.playBGAudio();
+        
+        //draw HUD
+        this.ctx.globalAlpha = 1.0;
+        this.drawHUD(this.ctx);
 
 	},
 	
@@ -148,16 +149,6 @@ app.main = {
         //ctx.stroke();
         //ctx.restore();
         ctx.drawImage(this.bunker,Game.WIDTH/2-25, Game.HEIGHT/2-25, 50,50);
-        
-        // bunker
-        //ctx.save();
-        //ctx.fillStyle = "skyblue";
-        //ctx.beginPath();
-        //ctx.arc(Game.WIDTH/2, Game.HEIGHT/2, 20, 0, Math.PI * 2, false);
-        //ctx.closePath();
-        //ctx.fill();
-        //ctx.restore();
-        
         
         //target
         ctx.save();
@@ -200,30 +191,30 @@ app.main = {
     
     doMousedown: function(e){
 //http://stackoverflow.com/questions/23117776/find-tangent-between-point-and-circle-canvas
-        this.fire = true;
-        this.sound.fireEffect();
-        
-        var mouse = getMouse(e);
-        
-        var distance = {
-            x: (Game.WIDTH/2) - mouse.x,
-            y: (Game.HEIGHT/2) - mouse.y, 
-            length: function(){
-                return Math.sqrt(this.x * this.x + this.y * this.y);
+            this.begins = false;
+            this.fire = true;
+            this.sound.fireEffect();
+            var mouse = getMouse(e);
+            
+            var distance = {
+                x: (Game.WIDTH/2) - mouse.x,
+                y: (Game.HEIGHT/2) - mouse.y, 
+                length: function(){
+                    return Math.sqrt(this.x * this.x + this.y * this.y);
+                }
             }
-        }
-    
-        var a = Math.acos(2/distance.length());
-        var b = Math.atan2(distance.y, distance.x);
-        var t = b-a;
         
-        var Tan = {
-            x: 5 * Math.sin(t),
-            y: 5 * -Math.cos(t)
-        }
-        
-        this.mouseX = Tan.x;
-        this.mouseY = Tan.y;
+            var a = Math.acos(2/distance.length());
+            var b = Math.atan2(distance.y, distance.x);
+            var t = b-a;
+            
+            var Tan = {
+                x: 5 * Math.sin(t),
+                y: 5 * -Math.cos(t)
+            }
+            
+            this.mouseX = Tan.x;
+            this.mouseY = Tan.y;
     },
     
 	fillText: function(ctx, string, x, y, css, color) {
@@ -244,6 +235,28 @@ app.main = {
 		return 1/fps;
 	},
 	
+    drawHUD: function(ctx){
+        ctx.save();
+        
+        //game begins
+        if(this.begins){
+            
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "black";
+            ctx.rect(0,0,Game.WIDTH,Game.HEIGHT);
+            ctx.fill();
+            ctx.restore();
+            
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            this.fillText(ctx, "Shoot the zombies", Game.WIDTH/2, Game.HEIGHT/2 - 45, "30pt bold courier", "lightgray");
+            this.fillText(ctx, "**Only one bullet available at a time", Game.WIDTH/2, Game.HEIGHT/2, "30pt bold courier", "lightgray");  
+            this.fillText(ctx, "Click to continue", Game.WIDTH/2, Game.HEIGHT/2 + 40, "25pt bold courer", "lightgray");
+        }
+        ctx.restore();
+    },
+    
 	drawPauseScreen: function(ctx){
 		ctx.save();
 		ctx.fillStyle = "black";
