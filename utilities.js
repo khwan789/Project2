@@ -120,9 +120,16 @@ function pointInsideCircle(x, y, I) {
 }
 
 function circlesIntersect(c1, c2){
-    console.log(c1.x);
+    //console.log(c1.x);
     var dx = c2.x - c1.x;
     var dy = c2.y - c1.y;
+    var distance = Math.sqrt(dx*dx + dy*dy);
+    return distance < c1.radius + c2.radius;
+}
+function circlesCenterIntersect(c1, c2){
+    //console.log(c1.x);
+    var dx = c2.cx - c1.cx;
+    var dy = c2.cy - c1.cy;
     var distance = Math.sqrt(dx*dx + dy*dy);
     return distance < c1.radius + c2.radius;
 }
