@@ -56,6 +56,7 @@ app.main = {
     bunker: undefined,
     blood: undefined,
     bg: undefined,
+    zombie: undefined,
     
     //sound
     sound: undefined,
@@ -82,15 +83,6 @@ app.main = {
     
         this.fire = false;
         
-        this.canvas.onmousemove= this.doMousemove.bind(this);
-        this.canvas.onmousedown = this.doMousedown.bind(this);
-        
-        this.countDown = this.SPAWNER_CD;
-        
-        for(var i = 0; i<this.NumEnemies; i++ ){
-        this.SpawnEenemy(this.ctx);
-        }
-        
         //images
         this.bunker = new Image;
         this.bunker.src = 'image/bunker.png';
@@ -98,6 +90,17 @@ app.main = {
         this.blood.src = 'image/blood.png';
         this.bg = new Image;
         this.bg.src = 'image/background.jpg';
+        this.zombie = new Image;
+        this.zombie.src = 'image/zombie.png';
+        
+        this.canvas.onmousemove= this.doMousemove.bind(this);
+        this.canvas.onmousedown = this.doMousedown.bind(this);
+        
+        this.countDown = this.SPAWNER_CD;
+        
+        for(var i = 0; i<this.NumEnemies; i++ ){
+            this.SpawnEenemy(this.ctx, this.zombie);
+        }
         
 		// start the game loop
         this.Player.Init(this.bunker, this.PlayerHealth);
@@ -121,7 +124,7 @@ app.main = {
 	 	var dt = this.calculateDeltaTime();
         this.countDown -= dt;
         if(this.countDown <= 0){
-            this.SpawnEenemy(this.ctx);
+            this.SpawnEenemy(this.ctx, this.zombie);
             this.countDown = this.SPAWNER_CD;
         }
 	 	 
@@ -173,7 +176,6 @@ app.main = {
         
         // if the game has begun
         if(!this.begins){
-            
                 for(var i = 0; i<this.Enemies.length; i++ ){
                     // enemies seeking the center
                     this.Enemies[i].SeekCenter(dt);
@@ -211,45 +213,59 @@ app.main = {
             this.ctx.drawImage(this.blood,this.BloodSpatterPos[i].x, this.BloodSpatterPos[i].y, 50,50);
         }
     },
-        SpawnEenemy: function(newCtx){
-            var enemy = {
-                // picking a random position on the screen
-                x: (Math.random() * Game.WIDTH),
-                y: (Math.random() * Game.HEIGHT),
-                radius: 10,
-                speed: 0.5,
-                ctx: newCtx,
-                velocity: {
-                    velX: 0,
-                    velY: 0,
-                },
-                SeekCenter: function(dt){
-                    // calculating vector between enemy and center
-                    this.velocity.velX = (Game.WIDTH/2 - this.x);
-                    this.velocity.velY = (Game.HEIGHT/2 - this.y);
-                    // normalizing vector
-                    var norm = Math.sqrt(this.velocity.velX * this.velocity.velX+this.velocity.velY * this.velocity.velY);
-                    // apply speed to vector
-                    this.velocity.velX = (this.velocity.velX * this.speed)/ (norm*0.02);
-                    this.velocity.velY = (this.velocity.velY * this.speed)/ (norm*0.02);
-                    // moving enemy
-                    this.x += this.velocity.velX * dt;
-                    this.y += this.velocity.velY * dt;
-                },
-                Draw: function(){
-                    this.ctx.save();
-                    this.ctx.beginPath();
-                    this.ctx.arc(this.x, this.y, this.radius,0,Math.PI * 2, false);
-                    this.ctx.fill();
-                    this.ctx.closePath();
-                    this.ctx.restore();
-                },
-            };
-            
-            Object.seal(enemy);
-            // storing enemy
-            this.Enemies.push(enemy);
-        },
+    SpawnEenemy: function(newCtx,zomImg){
+        var enemy = {
+            // picking a random position on the screen
+            x: (Math.random() * Game.WIDTH),
+            y: (Math.random() * Game.HEIGHT),
+            radius: 25,
+            speed: 0.5,
+            ctx: newCtx,
+            velocity: {
+                velX: 0,
+                velY: 0,
+            },
+            zombieImg: zomImg,
+            SeekCenter: function(dt){
+                // calculating vector between enemy and center
+                this.velocity.velX = (Game.WIDTH/2 - this.x);
+                this.velocity.velY = (Game.HEIGHT/2 - this.y);
+                // normalizing vector
+                var norm = Math.sqrt(this.velocity.velX * this.velocity.velX+this.velocity.velY * this.velocity.velY);
+                // apply speed to vector
+                this.velocity.velX = (this.velocity.velX * this.speed)/ (norm*0.02);
+                this.velocity.velY = (this.velocity.velY * this.speed)/ (norm*0.02);
+                // moving enemy
+                this.x += this.velocity.velX * dt;
+                this.y += this.velocity.velY * dt;
+            },
+            Draw: function(){
+                this.ctx.save();
+                this.ctx.beginPath();
+                this.ctx.arc(this.x, this.y, this.radius,0,Math.PI * 2, false);
+                this.ctx.fill();
+                this.ctx.closePath();
+                this.ctx.restore();
+                     
+                var rotX = this.velocity.velX - this.x;
+                var rotY = this.velocity.velY - this.y;
+                var rotation = Math.atan2(rotY,rotX);
+                
+                this.ctx.save();
+                this.ctx.translate(this.x, this.y);
+                this.ctx.rotate(Math.PI/2);
+                this.ctx.rotate(rotation);
+                this.ctx.drawImage(this.zombieImg,-25,-25,50,50);
+                this.ctx.restore();
+                
+                //this.ctx.rotate(rotation);  
+            },
+        };
+        
+        Object.seal(enemy);
+        // storing enemy
+        this.Enemies.push(enemy);
+    },
 	
     Player:{
         bunker: undefined,
@@ -302,7 +318,6 @@ app.main = {
         },
         CheckDead: function(){
             if(this.health <= 0){
-                console.log("Deaderino");
                 this.dead = true;
             }
         }
@@ -328,39 +343,43 @@ app.main = {
     
     doMousemove: function(e){
         var mouse = getMouse(e);
-        
-        //console.log("clicked");
-        
+                
         this.dirX = mouse.x;
         this.dirY = mouse.y;
     },
     
     doMousedown: function(e){
 //http://stackoverflow.com/questions/23117776/find-tangent-between-point-and-circle-canvas
-            this.begins = false;
-            this.fire = true;
-            this.sound.fireEffect();
-            var mouse = getMouse(e);
-            
-            var distance = {
-                x: (Game.WIDTH/2) - mouse.x,
-                y: (Game.HEIGHT/2) - mouse.y, 
-                length: function(){
-                    return Math.sqrt(this.x * this.x + this.y * this.y);
-                }
-            }
+        if(this.Player.health <= 0){
+            this.begins = true;
+            this.Player.health = 3;
+        }
         
-            var a = Math.acos(2/distance.length());
-            var b = Math.atan2(distance.y, distance.x);
-            var t = b-a;
-            
-            var Tan = {
-                x: 5 * Math.sin(t),
-                y: 5 * -Math.cos(t)
+        this.begins = false;
+        
+        this.fire = true;
+        this.sound.fireEffect();
+        var mouse = getMouse(e);
+        
+        var distance = {
+            x: (Game.WIDTH/2) - mouse.x,
+            y: (Game.HEIGHT/2) - mouse.y, 
+            length: function(){
+                return Math.sqrt(this.x * this.x + this.y * this.y);
             }
-            
-            this.mouseX = Tan.x;
-            this.mouseY = Tan.y;
+        }
+    
+        var a = Math.acos(2/distance.length());
+        var b = Math.atan2(distance.y, distance.x);
+        var t = b-a;
+        
+        var Tan = {
+            x: 5 * Math.sin(t),
+            y: 5 * -Math.cos(t)
+        }
+        
+        this.mouseX = Tan.x;
+        this.mouseY = Tan.y;
     },
     
 	fillText: function(ctx, string, x, y, css, color) {
@@ -383,10 +402,8 @@ app.main = {
 	
     drawHUD: function(ctx){
         ctx.save();
-        
         //game begins
         if(this.begins){
-            
             ctx.save();
             ctx.globalAlpha = 0.5;
             ctx.fillStyle = "black";
@@ -399,6 +416,20 @@ app.main = {
             this.fillText(ctx, "Shoot the zombies", Game.WIDTH/2, Game.HEIGHT/2 - 45, "30pt bold courier", "lightgray");
             this.fillText(ctx, "**Only one bullet available at a time", Game.WIDTH/2, Game.HEIGHT/2, "30pt bold courier", "lightgray");  
             this.fillText(ctx, "Click to continue", Game.WIDTH/2, Game.HEIGHT/2 + 40, "25pt bold courer", "lightgray");
+        }
+        else if(this.Player.health <= 0){            
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "black";
+            ctx.rect(0,0,Game.WIDTH,Game.HEIGHT);
+            ctx.fill();
+            ctx.restore();
+            
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            this.fillText(ctx, "You are dead", Game.WIDTH/2, Game.HEIGHT/2 - 45, "30pt bold courier", "lightgray");
+            this.fillText(ctx, "**Click to play again", Game.WIDTH/2, Game.HEIGHT/2, "30pt bold courier", "lightgray");  
+            //this.fillText(ctx, "Click to continue", Game.WIDTH/2, Game.HEIGHT/2 + 40, "25pt bold courer", "lightgray");
         }
         else{
             ctx.textAlign = "center";
